@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -15,6 +16,7 @@ const (
 )
 
 const IndexFile = "gh-index.json"
+const GHPathFile = "gh-path"
 
 func Dir() string {
 	home, _ := os.UserHomeDir()
@@ -25,7 +27,20 @@ func SummaryPath() string { return filepath.Join(Dir(), SummaryFile) }
 func StatePath() string   { return filepath.Join(Dir(), StateFile) }
 func HTMLPath() string    { return filepath.Join(Dir(), HTMLFile) }
 func LogPath() string     { return filepath.Join(Dir(), LogFile) }
-func IndexPath() string   { return filepath.Join(Dir(), IndexFile) }
+func IndexPath() string  { return filepath.Join(Dir(), IndexFile) }
+func GHPathPath() string { return filepath.Join(Dir(), GHPathFile) }
+
+func WriteGHPath(ghBin string) error {
+	return os.WriteFile(GHPathPath(), []byte(ghBin), 0644)
+}
+
+func ReadGHPath() string {
+	data, err := os.ReadFile(GHPathPath())
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
 
 type Item struct {
 	Number    int    `json:"number"`

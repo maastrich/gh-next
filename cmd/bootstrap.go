@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/maastrich/gh-next/internal/notify"
 	"github.com/maastrich/gh-next/internal/state"
 	"github.com/spf13/cobra"
 )
@@ -51,9 +50,15 @@ Run this once after installation, or again if notifications stop working.`,
 		}
 		ok("state dir: " + state.Dir())
 
-		// launcher script
-		notify.WriteLauncher()
-		ok("launcher script: " + state.Dir() + "/open-report.sh")
+		// store gh binary path for use in cron/notify context
+		ghBin, err := exec.LookPath("gh")
+		if err != nil {
+			return fail("gh not found in PATH")
+		}
+		if err := state.WriteGHPath(ghBin); err != nil {
+			return fail("write gh path: " + err.Error())
+		}
+		ok("gh path stored: " + ghBin)
 
 		// cron check
 		fmt.Println()
