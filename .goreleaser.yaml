@@ -19,12 +19,10 @@ builds:
         goarch: arm64
 
 archives:
-  - format: tar.gz
-    # gh extension install expects: {name}_{os}_{arch}[.tar.gz]
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    format_overrides:
-      - goos: windows
-        format: zip
+  - format: binary
+    # gh extension install matches: strings.HasSuffix(asset.Name, "{os}-{arch}")
+    # dash separator, raw binary (no tarball wrapping)
+    name_template: "{{ .ProjectName }}_{{ .Os }}-{{ .Arch }}"
 
 checksum:
   name_template: checksums.txt
