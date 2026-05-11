@@ -173,12 +173,20 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 		lastCommit := parseTime(lastCommitDate)
 		hasNewComments := false
 		for _, r := range pr.Reviews.Nodes {
-			if r.Author.Login != user {
-				t := parseTime(r.SubmittedAt)
-				if t.After(lastCommit) {
-					hasNewComments = true
-					break
-				}
+			if r.Author.Login == "" || r.Author.Login == user {
+				continue
+			}
+			// Only COMMENTED reviews with inline comments are actionable:
+			// REQUEST_CHANGES is caught by the reviewDecision switch above;
+			// APPROVED/DISMISSED are not questions; a COMMENTED body with no
+			// inline comments is a summary, not a request for action.
+			if r.State != "COMMENTED" || r.Comments.TotalCount == 0 {
+				continue
+			}
+			t := parseTime(r.SubmittedAt)
+			if t.After(lastCommit) {
+				hasNewComments = true
+				break
 			}
 		}
 		if hasNewComments {
