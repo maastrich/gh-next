@@ -43,6 +43,7 @@ var statusCmd = &cobra.Command{
 		summary.UpdatedAt = data.FetchedAt
 
 		notify.Diff(prev, items)
+		notify.Summary(summary)
 
 		if err := state.WriteSummary(summary); err != nil {
 			return fmt.Errorf("write summary: %w", err)

@@ -37,6 +37,44 @@ func Send(title, message, url string) {
 	_ = exec.Command("osascript", "-e", script).Run()
 }
 
+func Summary(s *state.Summary) {
+	if s.YourCount > 0 {
+		parts := buildSummaryParts(s.YourTurn)
+		msg := strings.Join(parts, " · ")
+		if msg == "" {
+			msg = fmt.Sprintf("%d item(s) need your attention", s.YourCount)
+		}
+		label := "item"
+		if s.YourCount > 1 {
+			label = "items"
+		}
+		Send(fmt.Sprintf("🟢 %d %s need attention", s.YourCount, label), msg, "")
+	} else {
+		Send("gh next", "All clear ✓", "")
+	}
+}
+
+func buildSummaryParts(items []state.Item) []string {
+	counts := map[string]int{}
+	for _, item := range items {
+		counts[item.Status]++
+	}
+	var parts []string
+	add := func(status, label string) {
+		if n := counts[status]; n > 0 {
+			parts = append(parts, fmt.Sprintf("%s %d", label, n))
+		}
+	}
+	add("merge_conflict", "⚔️")
+	add("ready_to_merge", "✅")
+	add("changes_needed", "🔧")
+	add("awaiting_answer", "💬")
+	add("needs_reply", "💬")
+	add("review_requested", "👀")
+	add("re_review_requested", "🔁")
+	return parts
+}
+
 func Diff(prev *state.PrevState, items []state.Item) {
 	prevMap := map[string]string{}
 	for _, p := range prev.Items {
