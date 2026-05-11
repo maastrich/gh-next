@@ -21,7 +21,7 @@ func Send(title, message, url string) {
 			"-title", title,
 			"-message", message,
 			"-group", "gh-next",
-			"-open", openURL,
+			"-execute", "open " + openURL,
 		}
 		cmd := exec.Command(path, args...)
 		cmd.Stdout = os.Stderr
