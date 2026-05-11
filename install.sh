@@ -16,12 +16,6 @@ ok "gh $(gh --version | head -1 | awk '{print $3}')"
 gh auth status &>/dev/null || fail "gh not authenticated. Run: gh auth login"
 ok "gh authenticated as $(gh api user --jq '.login')"
 
-command -v jq &>/dev/null || { warn "jq not found — installing via brew..."; brew install jq; }
-ok "jq $(jq --version)"
-
-command -v terminal-notifier &>/dev/null || { warn "terminal-notifier not found — installing via brew..."; brew install terminal-notifier; }
-ok "terminal-notifier $(terminal-notifier -version 2>/dev/null | head -1)"
-
 # Install / upgrade extension
 echo
 if gh extension list | grep -q "maastrich/gh-next"; then
@@ -34,8 +28,12 @@ else
     ok "gh-next installed"
 fi
 
-# Schedule (weekdays 8am–6pm, every hour)
+# Bootstrap (deps + launcher script)
 echo
+gh next bootstrap
+echo
+
+# Schedule (weekdays 8am–6pm, every hour)
 echo "Setting up recurring schedule (weekdays 8am–6pm, hourly)..."
 gh next program
 echo
