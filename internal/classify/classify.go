@@ -78,6 +78,15 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 			ciState = ciRollup.State
 		}
 	}
+	if ciState != "NONE" {
+		item.CIState = ciState
+	}
+
+	for _, r := range pr.Reviews.Nodes {
+		if r.State == "APPROVED" {
+			item.Approvals++
+		}
+	}
 
 	if role == "review" {
 		directlyRequested := false

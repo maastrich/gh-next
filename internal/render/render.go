@@ -75,10 +75,11 @@ ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .sg-needs_reply         ul { --accent: #58a6ff; }
 .sg-review_requested    ul,
 .sg-re_review_requested ul { --accent: #e3b341; }
-.sg-awaiting_merge      ul,
-.sg-ci_running          ul,
-.sg-awaiting_review     ul,
-.sg-awaiting_response   ul { --accent: #484f58; }
+.sg-awaiting_merge           ul,
+.sg-ci_running               ul,
+.sg-awaiting_review          ul,
+.sg-awaiting_response        ul,
+.sg-team_review_requested    ul { --accent: #484f58; }
 .sg-draft               ul { --accent: #484f58; }
 .sg-stale               ul { --accent: #30363d; }
 .sg-answered            ul { --accent: #1a4a2e; }
@@ -105,6 +106,14 @@ a.title:hover { color: #58a6ff; }
 a.repo { font-size: 0.75rem; color: #6e7681; text-decoration: none; }
 a.repo:hover { color: #8b949e; text-decoration: underline; }
 .num { font-size: 0.72rem; color: #484f58; }
+.item-badges { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+.badge { font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 10px; white-space: nowrap; }
+.badge-ci-success  { background: #1a4a2e; color: #56d364; }
+.badge-ci-failure,
+.badge-ci-error    { background: #4a1a1a; color: #f85149; }
+.badge-ci-pending,
+.badge-ci-progress { background: #3a2e0a; color: #e3b341; }
+.badge-approvals   { background: #1a3a1a; color: #56d364; }
 </style>
 </head>
 <body>`)
@@ -190,6 +199,16 @@ a.repo:hover { color: #8b949e; text-decoration: underline; }
 				w(`        <div class="item-meta">`)
 				w(`          <a class="repo" href="%s" target="_blank">%s</a>`, repoURL, html.EscapeString(item.Repo))
 				w(`          <span class="num">#%d</span>`, item.Number)
+				if item.Kind == "pr" {
+					w(`          <div class="item-badges">`)
+					if cls := ciClass(item.CIState); cls != "" {
+						w(`            <span class="badge %s">%s</span>`, cls, ciLabel(item.CIState))
+					}
+					if item.Approvals > 0 {
+						w(`            <span class="badge badge-approvals">%d ✓</span>`, item.Approvals)
+					}
+					w(`          </div>`)
+				}
 				w(`        </div>`)
 				w(`      </li>`)
 			}
@@ -227,6 +246,34 @@ func printGroup(label, color string, items []state.Item) {
 		fmt.Printf("  %s %s  %s[%s]%s\n", item.Icon, title, colorDim, item.Repo, colorReset)
 		fmt.Printf("     %s%s%s\n", colorDim, item.URL, colorReset)
 	}
+}
+
+func ciClass(state string) string {
+	switch state {
+	case "SUCCESS":
+		return "badge badge-ci-success"
+	case "FAILURE":
+		return "badge badge-ci-failure"
+	case "ERROR":
+		return "badge badge-ci-error"
+	case "PENDING", "EXPECTED":
+		return "badge badge-ci-pending"
+	case "IN_PROGRESS":
+		return "badge badge-ci-progress"
+	}
+	return ""
+}
+
+func ciLabel(state string) string {
+	switch state {
+	case "SUCCESS":
+		return "CI ✓"
+	case "FAILURE", "ERROR":
+		return "CI ✗"
+	case "PENDING", "EXPECTED", "IN_PROGRESS":
+		return "CI ⋯"
+	}
+	return ""
 }
 
 func formatTime(ts string) string {

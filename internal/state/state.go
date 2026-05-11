@@ -37,6 +37,8 @@ type Item struct {
 	Icon      string `json:"icon"`
 	Group     string `json:"group"` // your_turn | their_turn | parked
 	UpdatedAt string `json:"updatedAt"`
+	CIState   string `json:"ciState,omitempty"`   // SUCCESS | FAILURE | ERROR | PENDING | IN_PROGRESS
+	Approvals int    `json:"approvals,omitempty"` // count of APPROVED reviews
 }
 
 type Summary struct {
