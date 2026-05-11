@@ -50,16 +50,6 @@ Run this once after installation, or again if notifications stop working.`,
 		}
 		ok("state dir: " + state.Dir())
 
-		// store gh binary path for use in cron/notify context
-		ghBin, err := exec.LookPath("gh")
-		if err != nil {
-			return fail("gh not found in PATH")
-		}
-		if err := state.WriteGHPath(ghBin); err != nil {
-			return fail("write gh path: " + err.Error())
-		}
-		ok("gh path stored: " + ghBin)
-
 		// cron check
 		fmt.Println()
 		entry := getCronEntry()

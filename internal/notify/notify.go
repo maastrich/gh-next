@@ -12,26 +12,16 @@ import (
 
 func Send(title, message, url string) {
 	if path, err := exec.LookPath("terminal-notifier"); err == nil {
-		// Resolve the gh binary: stored path (works from cron) or fallback to PATH
-		ghBin := state.ReadGHPath()
-		if ghBin == "" {
-			ghBin, _ = exec.LookPath("gh")
-		}
-
-		var shellCmd string
+		openTarget := "file://" + state.HTMLPath()
 		if url != "" {
-			shellCmd = fmt.Sprintf("%s next open --url %q", ghBin, url)
-		} else {
-			shellCmd = ghBin + " next open"
+			openTarget = url
 		}
-		// terminal-notifier -execute takes AppleScript; wrap in do shell script
-		executeCmd := fmt.Sprintf("do shell script %q", shellCmd)
 
 		args := []string{
 			"-title", title,
 			"-message", message,
 			"-group", "gh-next",
-			"-execute", executeCmd,
+			"-open", openTarget,
 		}
 		cmd := exec.Command(path, args...)
 		cmd.Stdout = os.Stderr
