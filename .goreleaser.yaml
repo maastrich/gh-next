@@ -19,7 +19,7 @@ builds:
         goarch: arm64
 
 archives:
-  - format: binary
+  - formats: [binary]
     # gh extension install matches: strings.HasSuffix(asset.Name, "{os}-{arch}")
     # dash separator, raw binary (no tarball wrapping)
     name_template: "{{ .ProjectName }}_{{ .Os }}-{{ .Arch }}"
