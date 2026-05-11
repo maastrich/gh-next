@@ -10,10 +10,15 @@ import (
 )
 
 func Send(title, message, url string) {
-	htmlURL := "file://" + state.HTMLPath()
-	openURL := url
-	if openURL == "" {
-		openURL = htmlURL
+	// For click target: prefer raw filesystem path over file:// URL
+	// `open /path/file.html` reliably opens in default browser on macOS
+	htmlPath := state.HTMLPath()
+	openTarget := url
+	if openTarget == "" {
+		openTarget = htmlPath
+	} else {
+		// Strip file:// prefix if present — open works better with raw paths
+		openTarget = strings.TrimPrefix(openTarget, "file://")
 	}
 
 	if path, err := exec.LookPath("terminal-notifier"); err == nil {
@@ -21,7 +26,7 @@ func Send(title, message, url string) {
 			"-title", title,
 			"-message", message,
 			"-group", "gh-next",
-			"-execute", "open " + openURL,
+			"-execute", "open " + openTarget,
 		}
 		cmd := exec.Command(path, args...)
 		cmd.Stdout = os.Stderr
