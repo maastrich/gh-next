@@ -285,7 +285,7 @@ func TestClassifyPR_authored(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := classifyPR(tc.pr, "mine", user, threshold)
+			got := classifyPR(tc.pr, "mine", user, threshold, nil)
 			if got.Status != tc.wantStatus {
 				t.Errorf("status: got %q, want %q", got.Status, tc.wantStatus)
 			}
@@ -367,7 +367,7 @@ func TestClassifyPR_review(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := classifyPR(tc.pr, "review", user, threshold)
+			got := classifyPR(tc.pr, "review", user, threshold, nil)
 			if got.Status != tc.wantStatus {
 				t.Errorf("status: got %q, want %q", got.Status, tc.wantStatus)
 			}
@@ -580,8 +580,70 @@ func TestRun_deduplicatesReviewPRs(t *testing.T) {
 		AuthoredPRs: []fetch.PR{pr},
 		ReviewPRs:   []fetch.PR{pr},
 	}
-	items := Run(data, 7)
+	items := Run(data, 7, nil)
 	if len(items) != 1 {
 		t.Errorf("expected 1 item (dedup), got %d", len(items))
+	}
+}
+
+func TestIgnoredJobs(t *testing.T) {
+	threshold := 7 * 24 * time.Hour
+	ignoredJobs := []string{"Linear"}
+
+	cases := []struct {
+		name       string
+		pr         fetch.PR
+		wantStatus string
+		wantGroup  string
+	}{
+		{
+			name: "ignored job only → awaiting_review not changes_needed",
+			pr: func() fetch.PR {
+				r := &fetch.CheckRollup{State: "FAILURE"}
+				r.Contexts.Nodes = []fetch.CheckContext{
+					{Context: "Linear", State: "FAILURE"},
+				}
+				return withRollup(basePR(1), ago(30*time.Minute), r)
+			}(),
+			wantStatus: "awaiting_review",
+			wantGroup:  "their_turn",
+		},
+		{
+			name: "ignored job + real failure → changes_needed",
+			pr: func() fetch.PR {
+				r := &fetch.CheckRollup{State: "FAILURE"}
+				r.Contexts.Nodes = []fetch.CheckContext{
+					{Context: "Linear", State: "FAILURE"},
+					{Name: "jest", Conclusion: "FAILURE"},
+				}
+				return withRollup(basePR(2), ago(30*time.Minute), r)
+			}(),
+			wantStatus: "changes_needed",
+			wantGroup:  "your_turn",
+		},
+		{
+			name: "ignored job substring match (Linear QA check)",
+			pr: func() fetch.PR {
+				r := &fetch.CheckRollup{State: "FAILURE"}
+				r.Contexts.Nodes = []fetch.CheckContext{
+					{Context: "Linear QA check", State: "FAILURE"},
+				}
+				return withRollup(basePR(3), ago(30*time.Minute), r)
+			}(),
+			wantStatus: "awaiting_review",
+			wantGroup:  "their_turn",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := classifyPR(tc.pr, "mine", user, threshold, ignoredJobs)
+			if got.Status != tc.wantStatus {
+				t.Errorf("status: got %q, want %q", got.Status, tc.wantStatus)
+			}
+			if got.Group != tc.wantGroup {
+				t.Errorf("group: got %q, want %q", got.Group, tc.wantGroup)
+			}
+		})
 	}
 }

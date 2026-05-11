@@ -10,7 +10,7 @@ import (
 
 const defaultStaleDays = 7
 
-func Run(data *fetch.RawData, staleDays int) []state.Item {
+func Run(data *fetch.RawData, staleDays int, ignoredJobs []string) []state.Item {
 	if staleDays <= 0 {
 		staleDays = defaultStaleDays
 	}
@@ -21,14 +21,14 @@ func Run(data *fetch.RawData, staleDays int) []state.Item {
 	authoredURLs := map[string]bool{}
 	for _, pr := range data.AuthoredPRs {
 		authoredURLs[pr.URL] = true
-		items = append(items, classifyPR(pr, "mine", data.User, staleThreshold))
+		items = append(items, classifyPR(pr, "mine", data.User, staleThreshold, ignoredJobs))
 	}
 
 	for _, pr := range data.ReviewPRs {
 		if authoredURLs[pr.URL] {
 			continue
 		}
-		items = append(items, classifyPR(pr, "review", data.User, staleThreshold))
+		items = append(items, classifyPR(pr, "review", data.User, staleThreshold, ignoredJobs))
 	}
 
 	for _, issue := range data.Issues {
@@ -58,7 +58,7 @@ func isStale(updatedAt string, threshold time.Duration) bool {
 	return time.Since(t) > threshold
 }
 
-func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) state.Item {
+func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration, ignoredJobs []string) state.Item {
 	item := state.Item{
 		Number:    pr.Number,
 		Title:     pr.Title,
@@ -83,7 +83,7 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 	}
 	if ciRollup != nil {
 		for _, ctx := range ciRollup.Contexts.Nodes {
-			if isFailedCheck(ctx) && !isAuthGate(ctx) {
+			if isFailedCheck(ctx) && !isAuthGate(ctx) && !isIgnoredJob(ctx, ignoredJobs) {
 				if name := checkName(ctx); name != "" {
 					item.FailedChecks = append(item.FailedChecks, name)
 				}
@@ -169,7 +169,7 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 		item.Group = "their_turn"
 
 	case pr.ReviewDecision == "APPROVED":
-		if hasActionableCIFailure(ciRollup) {
+		if hasActionableCIFailure(ciRollup, ignoredJobs) {
 			item.Status = "changes_needed"
 			item.Icon = "🔧"
 			item.Group = "your_turn"
@@ -207,7 +207,7 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 			item.Status = "awaiting_answer"
 			item.Icon = "💬"
 			item.Group = "your_turn"
-		} else if hasActionableCIFailure(ciRollup) {
+		} else if hasActionableCIFailure(ciRollup, ignoredJobs) {
 			item.Status = "changes_needed"
 			item.Icon = "🔧"
 			item.Group = "your_turn"
@@ -340,7 +340,7 @@ func classifyDiscussion(disc fetch.Discussion, user string, staleThreshold time.
 	return item
 }
 
-func hasActionableCIFailure(rollup *fetch.CheckRollup) bool {
+func hasActionableCIFailure(rollup *fetch.CheckRollup, ignoredJobs []string) bool {
 	if rollup == nil {
 		return false
 	}
@@ -352,7 +352,7 @@ func hasActionableCIFailure(rollup *fetch.CheckRollup) bool {
 		return true
 	}
 	for _, ctx := range rollup.Contexts.Nodes {
-		if isFailedCheck(ctx) && !isAuthGate(ctx) {
+		if isFailedCheck(ctx) && !isAuthGate(ctx) && !isIgnoredJob(ctx, ignoredJobs) {
 			return true
 		}
 	}
@@ -364,6 +364,16 @@ func checkName(ctx fetch.CheckContext) string {
 		return ctx.Name
 	}
 	return ctx.Context
+}
+
+func isIgnoredJob(ctx fetch.CheckContext, ignoredJobs []string) bool {
+	name := strings.ToLower(checkName(ctx))
+	for _, j := range ignoredJobs {
+		if strings.Contains(name, strings.ToLower(j)) {
+			return true
+		}
+	}
+	return false
 }
 
 func isFailedCheck(ctx fetch.CheckContext) bool {

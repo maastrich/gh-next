@@ -6,6 +6,7 @@ import (
 
 	"github.com/cli/go-gh/v2/pkg/api"
 	"github.com/maastrich/gh-next/internal/classify"
+	"github.com/maastrich/gh-next/internal/config"
 	"github.com/maastrich/gh-next/internal/fetch"
 	"github.com/maastrich/gh-next/internal/notify"
 	"github.com/maastrich/gh-next/internal/render"
@@ -40,8 +41,9 @@ var statusCmd = &cobra.Command{
 			return fmt.Errorf("fetch: %w", err)
 		}
 
+		cfg := config.Load()
 		prev := state.ReadPrevState()
-		items := classify.Run(data, staleDays)
+		items := classify.Run(data, staleDays, cfg.IgnoreFailingJobs)
 		summary := classify.Group(items)
 		summary.UpdatedAt = data.FetchedAt
 
