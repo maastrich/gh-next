@@ -54,7 +54,9 @@ func withReview(pr fetch.PR, login, submittedAt, reviewState string) fetch.PR {
 		State       string "json:\"state\""
 		SubmittedAt string "json:\"submittedAt\""
 	}{
-		Author:      struct{ Login string "json:\"login\"" }{Login: login},
+		Author: struct {
+			Login string "json:\"login\""
+		}{Login: login},
 		State:       reviewState,
 		SubmittedAt: submittedAt,
 	})
@@ -276,7 +278,9 @@ func TestClassifyIssue(t *testing.T) {
 			} "json:\"author\""
 			CreatedAt string "json:\"createdAt\""
 		}{
-			Author:    struct{ Login string "json:\"login\"" }{Login: login},
+			Author: struct {
+				Login string "json:\"login\""
+			}{Login: login},
 			CreatedAt: createdAt,
 		})
 		return issue
@@ -362,7 +366,9 @@ func TestClassifyDiscussion(t *testing.T) {
 			} "json:\"author\""
 			CreatedAt string "json:\"createdAt\""
 		}{
-			Author:    struct{ Login string "json:\"login\"" }{Login: login},
+			Author: struct {
+				Login string "json:\"login\""
+			}{Login: login},
 			CreatedAt: createdAt,
 		})
 		return disc

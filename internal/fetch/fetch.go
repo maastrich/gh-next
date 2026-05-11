@@ -17,16 +17,16 @@ type RawData struct {
 }
 
 type PR struct {
-	Number         int    `json:"number"`
-	Title          string `json:"title"`
-	URL            string `json:"url"`
-	IsDraft        bool   `json:"isDraft"`
-	UpdatedAt      string `json:"updatedAt"`
-	Mergeable      string `json:"mergeable"`
-	ReviewDecision string `json:"reviewDecision"`
-	ViewerCanUpdate bool  `json:"viewerCanUpdate"`
-	ViewerDidAuthor bool  `json:"viewerDidAuthor"`
-	Repository     struct {
+	Number          int    `json:"number"`
+	Title           string `json:"title"`
+	URL             string `json:"url"`
+	IsDraft         bool   `json:"isDraft"`
+	UpdatedAt       string `json:"updatedAt"`
+	Mergeable       string `json:"mergeable"`
+	ReviewDecision  string `json:"reviewDecision"`
+	ViewerCanUpdate bool   `json:"viewerCanUpdate"`
+	ViewerDidAuthor bool   `json:"viewerDidAuthor"`
+	Repository      struct {
 		NameWithOwner string `json:"nameWithOwner"`
 	} `json:"repository"`
 	Commits struct {
@@ -59,10 +59,10 @@ type PR struct {
 }
 
 type Issue struct {
-	Number    int    `json:"number"`
-	Title     string `json:"title"`
-	URL       string `json:"url"`
-	UpdatedAt string `json:"updatedAt"`
+	Number     int    `json:"number"`
+	Title      string `json:"title"`
+	URL        string `json:"url"`
+	UpdatedAt  string `json:"updatedAt"`
 	Repository struct {
 		NameWithOwner string `json:"nameWithOwner"`
 	} `json:"repository"`

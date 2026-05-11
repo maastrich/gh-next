@@ -25,7 +25,7 @@ func SummaryPath() string { return filepath.Join(Dir(), SummaryFile) }
 func StatePath() string   { return filepath.Join(Dir(), StateFile) }
 func HTMLPath() string    { return filepath.Join(Dir(), HTMLFile) }
 func LogPath() string     { return filepath.Join(Dir(), LogFile) }
-func IndexPath() string { return filepath.Join(Dir(), IndexFile) }
+func IndexPath() string   { return filepath.Join(Dir(), IndexFile) }
 
 type Item struct {
 	Number    int    `json:"number"`

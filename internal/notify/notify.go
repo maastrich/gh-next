@@ -9,7 +9,6 @@ import (
 	"github.com/maastrich/gh-next/internal/state"
 )
 
-
 var knownNotifierPaths = []string{
 	"terminal-notifier",
 	"/opt/homebrew/bin/terminal-notifier",
