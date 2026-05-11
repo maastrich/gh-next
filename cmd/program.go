@@ -68,14 +68,30 @@ func writeCrontab(content string) error {
 	return cmd.Run()
 }
 
+func ghAuthToken() string {
+	out, err := exec.Command("gh", "auth", "token").Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
 func setCron(expr string) error {
 	ghBin, err := exec.LookPath("gh")
 	if err != nil {
 		return fmt.Errorf("gh not found in PATH: %w", err)
 	}
 
+	token := ghAuthToken()
+	if token == "" {
+		return fmt.Errorf("gh not authenticated — run: gh auth login")
+	}
+
+	home, _ := os.UserHomeDir()
 	logPath := state.LogPath()
-	block := fmt.Sprintf("%s\n%s %s next status >> %s 2>&1", cronMarker, expr, ghBin, logPath)
+	// Inject HOME and GH_TOKEN so cron's minimal env doesn't break gh auth
+	block := fmt.Sprintf("%s\n%s HOME=%s GH_TOKEN=%s %s next status >> %s 2>&1",
+		cronMarker, expr, home, token, ghBin, logPath)
 
 	current := readCrontab()
 	cleaned := stripCronBlock(current)
@@ -91,6 +107,7 @@ func setCron(expr string) error {
 	fmt.Printf("Scheduled: %s\n", expr)
 	fmt.Printf("Command:   %s next status\n", ghBin)
 	fmt.Printf("Log:       %s\n", logPath)
+	fmt.Printf("Auth:      GH_TOKEN injected\n")
 	return nil
 }
 
