@@ -24,16 +24,6 @@ Run this once after installation, or again if notifications stop working.`,
 		fmt.Println("=== gh next bootstrap ===")
 		fmt.Println()
 
-		// jq
-		if _, err := exec.LookPath("jq"); err != nil {
-			warn("jq not found — installing via brew...")
-			if err := run("brew", "install", "jq"); err != nil {
-				return fail("brew install jq failed: " + err.Error())
-			}
-		}
-		out, _ := exec.Command("jq", "--version").Output()
-		ok("jq " + string(out))
-
 		// terminal-notifier
 		if _, err := exec.LookPath("terminal-notifier"); err != nil {
 			warn("terminal-notifier not found — installing via brew...")
@@ -41,7 +31,7 @@ Run this once after installation, or again if notifications stop working.`,
 				return fail("brew install terminal-notifier failed: " + err.Error())
 			}
 		}
-		out, _ = exec.Command("terminal-notifier", "-version").Output()
+		out, _ := exec.Command("terminal-notifier", "-version").Output()
 		ok("terminal-notifier " + string(out))
 
 		// state dir

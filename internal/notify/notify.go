@@ -45,6 +45,9 @@ func Send(title, message, url string) {
 		return
 	}
 
+	// terminal-notifier not found — notifications will show as Script Editor.
+	// Fix: run `gh next bootstrap`
+	fmt.Fprintln(os.Stderr, "warning: terminal-notifier not found — run: gh next bootstrap")
 	safe := func(s string) string {
 		return strings.ReplaceAll(s, `"`, `\"`)
 	}
