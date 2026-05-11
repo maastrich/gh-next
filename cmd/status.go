@@ -51,6 +51,10 @@ var statusCmd = &cobra.Command{
 			return fmt.Errorf("write state: %w", err)
 		}
 
+		if err := render.HTML(summary); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: HTML report failed: %v\n", err)
+		}
+
 		render.Summary(summary)
 		return nil
 	},
