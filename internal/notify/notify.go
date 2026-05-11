@@ -10,8 +10,23 @@ import (
 )
 
 
+var knownNotifierPaths = []string{
+	"terminal-notifier",
+	"/opt/homebrew/bin/terminal-notifier",
+	"/usr/local/bin/terminal-notifier",
+}
+
+func findNotifier() string {
+	for _, p := range knownNotifierPaths {
+		if path, err := exec.LookPath(p); err == nil {
+			return path
+		}
+	}
+	return ""
+}
+
 func Send(title, message, url string) {
-	if path, err := exec.LookPath("terminal-notifier"); err == nil {
+	if path := findNotifier(); path != "" {
 		openTarget := "file://" + state.HTMLPath()
 		if url != "" {
 			openTarget = url
