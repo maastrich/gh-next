@@ -18,7 +18,7 @@ ok "gh authenticated as $(gh api user --jq '.login')"
 
 # Install / upgrade extension
 echo
-if gh extension list | grep -q "maastrich/gh-next"; then
+if gh extension list | grep "gh-next" | grep -q .; then
     echo "Upgrading gh-next..."
     gh extension upgrade gh-next
     ok "gh-next upgraded"

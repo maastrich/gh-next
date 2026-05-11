@@ -18,12 +18,14 @@ func Send(title, message, url string) {
 			ghBin, _ = exec.LookPath("gh")
 		}
 
-		var executeCmd string
+		var shellCmd string
 		if url != "" {
-			executeCmd = fmt.Sprintf("%s next open --url %q", ghBin, url)
+			shellCmd = fmt.Sprintf("%s next open --url %q", ghBin, url)
 		} else {
-			executeCmd = ghBin + " next open"
+			shellCmd = ghBin + " next open"
 		}
+		// terminal-notifier -execute takes AppleScript; wrap in do shell script
+		executeCmd := fmt.Sprintf("do shell script %q", shellCmd)
 
 		args := []string{
 			"-title", title,
