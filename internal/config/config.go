@@ -10,10 +10,13 @@ type Config struct {
 	IgnoreFailingJobs []string `json:"ignoreFailingJobs"`
 }
 
-func Load() *Config {
+func configPath() string {
 	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".gh-next", "config.json")
-	data, err := os.ReadFile(path)
+	return filepath.Join(home, ".gh-next", "config.json")
+}
+
+func Load() *Config {
+	data, err := os.ReadFile(configPath())
 	if err != nil {
 		return &Config{}
 	}
@@ -22,4 +25,16 @@ func Load() *Config {
 		return &Config{}
 	}
 	return &cfg
+}
+
+func (c *Config) Save() error {
+	path := configPath()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0o644)
 }
