@@ -57,8 +57,7 @@ type PR struct {
 	Reviews struct {
 		Nodes []struct {
 			Author struct {
-				Login    string `json:"login"`
-				Typename string `json:"__typename"`
+				Login string `json:"login"`
 			} `json:"author"`
 			State       string `json:"state"`
 			SubmittedAt string `json:"submittedAt"`
@@ -127,7 +126,7 @@ const prFragment = `
   }
   reviews(last: 30) {
     nodes {
-      author { login __typename }
+      author { login }
       state submittedAt
       comments { totalCount }
     }

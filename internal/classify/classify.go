@@ -8,14 +8,6 @@ import (
 	"github.com/maastrich/gh-next/internal/state"
 )
 
-func isBot(typename, login string) bool {
-	if typename == "Bot" {
-		return true
-	}
-	l := strings.ToLower(login)
-	return strings.HasSuffix(l, "[bot]") || strings.Contains(l, "copilot")
-}
-
 const defaultStaleDays = 7
 
 func Run(data *fetch.RawData, staleDays int) []state.Item {
@@ -184,13 +176,11 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 			if r.Author.Login == "" || r.Author.Login == user {
 				continue
 			}
-			// Approvals/dismissals without inline comments aren't questions to answer.
-			// COMMENTED with no inline still counts: the review body is the feedback.
-			if r.State != "COMMENTED" && r.Comments.TotalCount == 0 {
-				continue
-			}
-			// Bot summaries without inline comments are auto-generated noise.
-			if isBot(r.Author.Typename, r.Author.Login) && r.Comments.TotalCount == 0 {
+			// Only COMMENTED reviews with inline comments are actionable:
+			// REQUEST_CHANGES is caught by the reviewDecision switch above;
+			// APPROVED/DISMISSED are not questions; a COMMENTED body with no
+			// inline comments is a summary, not a request for action.
+			if r.State != "COMMENTED" || r.Comments.TotalCount == 0 {
 				continue
 			}
 			t := parseTime(r.SubmittedAt)
