@@ -88,14 +88,14 @@ header {
 .group { margin-bottom: 40px; }
 
 .group-theirs {
-  --t1: oklch(66%% 0.007 250);
-  --t2: oklch(44%% 0.006 250);
-  --t3: oklch(32%% 0.005 250);
+  --t1: oklch(78%% 0.007 250);
+  --t2: oklch(56%% 0.007 250);
+  --t3: oklch(42%% 0.006 250);
 }
 .group-parked {
-  --t1: oklch(46%% 0.006 250);
-  --t2: oklch(33%% 0.005 250);
-  --t3: oklch(24%% 0.004 250);
+  --t1: oklch(54%% 0.006 250);
+  --t2: oklch(40%% 0.005 250);
+  --t3: oklch(30%% 0.004 250);
 }
 
 h2 {
