@@ -18,9 +18,9 @@ type RawData struct {
 
 type CheckContext struct {
 	// CheckRun fields
-	Name        string `json:"name"`
-	Conclusion  string `json:"conclusion"`
-	DetailsUrl  string `json:"detailsUrl"`
+	Name       string `json:"name"`
+	Conclusion string `json:"conclusion"`
+	DetailsUrl string `json:"detailsUrl"`
 	// StatusContext fields
 	Context     string `json:"context"`
 	State       string `json:"state"`
