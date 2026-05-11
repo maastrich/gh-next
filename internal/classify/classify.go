@@ -121,7 +121,11 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration, ig
 			}
 		}
 		lastCommit := parseTime(lastCommitDate)
-		if myLastReview.IsZero() && !directlyRequested {
+		if pr.IsDraft {
+			item.Status = "draft"
+			item.Icon = "📝"
+			item.Group = "their_turn"
+		} else if myLastReview.IsZero() && !directlyRequested {
 			item.Status = "team_review_requested"
 			item.Icon = "👥"
 			item.Group = "their_turn"
