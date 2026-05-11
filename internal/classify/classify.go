@@ -367,9 +367,9 @@ func checkName(ctx fetch.CheckContext) string {
 }
 
 func isIgnoredJob(ctx fetch.CheckContext, ignoredJobs []string) bool {
-	name := strings.ToLower(checkName(ctx))
+	haystack := strings.ToLower(checkName(ctx) + " " + ctx.DetailsUrl + " " + ctx.TargetUrl)
 	for _, j := range ignoredJobs {
-		if strings.Contains(name, strings.ToLower(j)) {
+		if strings.Contains(haystack, strings.ToLower(j)) {
 			return true
 		}
 	}
