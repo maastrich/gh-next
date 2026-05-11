@@ -1,6 +1,7 @@
 package classify
 
 import (
+	"strings"
 	"time"
 
 	"github.com/maastrich/gh-next/internal/fetch"
@@ -69,10 +70,12 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 
 	lastCommitDate := ""
 	ciState := "NONE"
+	var ciRollup *fetch.CheckRollup
 	if len(pr.Commits.Nodes) > 0 {
 		lastCommitDate = pr.Commits.Nodes[len(pr.Commits.Nodes)-1].Commit.CommittedDate
-		if sc := pr.Commits.Nodes[len(pr.Commits.Nodes)-1].Commit.StatusCheckRollup; sc != nil {
-			ciState = sc.State
+		ciRollup = pr.Commits.Nodes[len(pr.Commits.Nodes)-1].Commit.StatusCheckRollup
+		if ciRollup != nil {
+			ciState = ciRollup.State
 		}
 	}
 
@@ -126,7 +129,7 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 		item.Group = "their_turn"
 
 	case pr.ReviewDecision == "APPROVED":
-		if ciState == "FAILURE" || ciState == "ERROR" {
+		if hasActionableCIFailure(ciRollup) {
 			item.Status = "changes_needed"
 			item.Icon = "🔧"
 			item.Group = "your_turn"
@@ -156,7 +159,7 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 			item.Status = "awaiting_answer"
 			item.Icon = "💬"
 			item.Group = "your_turn"
-		} else if ciState == "FAILURE" || ciState == "ERROR" {
+		} else if hasActionableCIFailure(ciRollup) {
 			item.Status = "changes_needed"
 			item.Icon = "🔧"
 			item.Group = "your_turn"
@@ -287,6 +290,35 @@ func classifyDiscussion(disc fetch.Discussion, user string, staleThreshold time.
 	}
 
 	return item
+}
+
+func hasActionableCIFailure(rollup *fetch.CheckRollup) bool {
+	if rollup == nil {
+		return false
+	}
+	if rollup.State != "FAILURE" && rollup.State != "ERROR" {
+		return false
+	}
+	if len(rollup.Contexts.Nodes) == 0 {
+		// no individual check data — assume actionable
+		return true
+	}
+	for _, ctx := range rollup.Contexts.Nodes {
+		if isFailedCheck(ctx) && !isAuthGate(ctx) {
+			return true
+		}
+	}
+	return false
+}
+
+func isFailedCheck(ctx fetch.CheckContext) bool {
+	return ctx.Conclusion == "FAILURE" || ctx.State == "FAILURE" || ctx.State == "ERROR"
+}
+
+func isAuthGate(ctx fetch.CheckContext) bool {
+	url := ctx.TargetUrl + ctx.DetailsUrl
+	return strings.Contains(url, "vercel.com/git/authorize") ||
+		strings.Contains(strings.ToLower(ctx.Description), "authorization required")
 }
 
 func Group(items []state.Item) *state.Summary {

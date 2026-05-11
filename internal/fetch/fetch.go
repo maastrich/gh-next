@@ -16,6 +16,23 @@ type RawData struct {
 	Discussions []Discussion
 }
 
+type CheckContext struct {
+	// CheckRun fields
+	Conclusion string `json:"conclusion"`
+	DetailsUrl string `json:"detailsUrl"`
+	// StatusContext fields
+	State       string `json:"state"`
+	TargetUrl   string `json:"targetUrl"`
+	Description string `json:"description"`
+}
+
+type CheckRollup struct {
+	State    string `json:"state"`
+	Contexts struct {
+		Nodes []CheckContext `json:"nodes"`
+	} `json:"contexts"`
+}
+
 type PR struct {
 	Number          int    `json:"number"`
 	Title           string `json:"title"`
@@ -32,10 +49,8 @@ type PR struct {
 	Commits struct {
 		Nodes []struct {
 			Commit struct {
-				CommittedDate     string `json:"committedDate"`
-				StatusCheckRollup *struct {
-					State string `json:"state"`
-				} `json:"statusCheckRollup"`
+				CommittedDate     string       `json:"committedDate"`
+				StatusCheckRollup *CheckRollup `json:"statusCheckRollup"`
 			} `json:"commit"`
 		} `json:"nodes"`
 	} `json:"commits"`
@@ -101,7 +116,10 @@ const prFragment = `
   reviewDecision viewerCanUpdate viewerDidAuthor
   repository { nameWithOwner }
   commits(last: 1) {
-    nodes { commit { committedDate statusCheckRollup { state } } }
+    nodes { commit { committedDate statusCheckRollup { state contexts(last: 20) { nodes {
+      ... on CheckRun { conclusion detailsUrl }
+      ... on StatusContext { state targetUrl description }
+    } } } } }
   }
   reviews(last: 30) {
     nodes { author { login } state submittedAt }

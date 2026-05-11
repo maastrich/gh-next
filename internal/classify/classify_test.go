@@ -30,18 +30,27 @@ func basePR(number int) fetch.PR {
 func withCommit(pr fetch.PR, committedAt string, ciState string) fetch.PR {
 	node := struct {
 		Commit struct {
-			CommittedDate     string "json:\"committedDate\""
-			StatusCheckRollup *struct {
-				State string "json:\"state\""
-			} "json:\"statusCheckRollup\""
-		} "json:\"commit\""
+			CommittedDate     string             `json:"committedDate"`
+			StatusCheckRollup *fetch.CheckRollup `json:"statusCheckRollup"`
+		} `json:"commit"`
 	}{}
 	node.Commit.CommittedDate = committedAt
 	if ciState != "" {
-		node.Commit.StatusCheckRollup = &struct {
-			State string "json:\"state\""
-		}{State: ciState}
+		node.Commit.StatusCheckRollup = &fetch.CheckRollup{State: ciState}
 	}
+	pr.Commits.Nodes = append(pr.Commits.Nodes, node)
+	return pr
+}
+
+func withRollup(pr fetch.PR, committedAt string, rollup *fetch.CheckRollup) fetch.PR {
+	node := struct {
+		Commit struct {
+			CommittedDate     string             `json:"committedDate"`
+			StatusCheckRollup *fetch.CheckRollup `json:"statusCheckRollup"`
+		} `json:"commit"`
+	}{}
+	node.Commit.CommittedDate = committedAt
+	node.Commit.StatusCheckRollup = rollup
 	pr.Commits.Nodes = append(pr.Commits.Nodes, node)
 	return pr
 }
@@ -166,15 +175,55 @@ func TestClassifyPR_authored(t *testing.T) {
 			wantGroup:  "your_turn",
 		},
 		{
+			name: "auth-gate only CI failure, no approval → awaiting_review",
+			pr: func() fetch.PR {
+				r := &fetch.CheckRollup{State: "FAILURE"}
+				r.Contexts.Nodes = []fetch.CheckContext{
+					{State: "FAILURE", TargetUrl: "https://vercel.com/git/authorize?team=foo"},
+				}
+				return withRollup(basePR(11), ago(30*time.Minute), r)
+			}(),
+			wantStatus: "awaiting_review",
+			wantGroup:  "their_turn",
+		},
+		{
+			name: "auth-gate only CI failure, approved + can update → ready_to_merge",
+			pr: func() fetch.PR {
+				p := basePR(12)
+				p.ReviewDecision = "APPROVED"
+				p.ViewerCanUpdate = true
+				r := &fetch.CheckRollup{State: "FAILURE"}
+				r.Contexts.Nodes = []fetch.CheckContext{
+					{State: "FAILURE", TargetUrl: "https://vercel.com/git/authorize?team=foo"},
+				}
+				return withRollup(p, ago(30*time.Minute), r)
+			}(),
+			wantStatus: "ready_to_merge",
+			wantGroup:  "your_turn",
+		},
+		{
+			name: "mixed auth-gate + real CI failure → changes_needed",
+			pr: func() fetch.PR {
+				r := &fetch.CheckRollup{State: "FAILURE"}
+				r.Contexts.Nodes = []fetch.CheckContext{
+					{State: "FAILURE", TargetUrl: "https://vercel.com/git/authorize?team=foo"},
+					{State: "FAILURE", TargetUrl: "https://github.com/org/repo/runs/123"},
+				}
+				return withRollup(basePR(13), ago(30*time.Minute), r)
+			}(),
+			wantStatus: "changes_needed",
+			wantGroup:  "your_turn",
+		},
+		{
 			name:       "awaiting_review default",
-			pr:         withCommit(basePR(11), ago(30*time.Minute), "SUCCESS"),
+			pr:         withCommit(basePR(14), ago(30*time.Minute), "SUCCESS"),
 			wantStatus: "awaiting_review",
 			wantGroup:  "their_turn",
 		},
 		{
 			name: "stale overrides their_turn",
 			pr: func() fetch.PR {
-				p := withCommit(basePR(12), ago(30*time.Minute), "SUCCESS")
+				p := withCommit(basePR(15), ago(30*time.Minute), "SUCCESS")
 				p.UpdatedAt = staleUpdatedAt()
 				return p
 			}(),
@@ -184,7 +233,7 @@ func TestClassifyPR_authored(t *testing.T) {
 		{
 			name: "stale does not override your_turn",
 			pr: func() fetch.PR {
-				p := basePR(13)
+				p := basePR(16)
 				p.Mergeable = "CONFLICTING"
 				p.UpdatedAt = staleUpdatedAt()
 				return p
