@@ -81,10 +81,22 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 	if ciState != "NONE" {
 		item.CIState = ciState
 	}
+	if ciRollup != nil {
+		for _, ctx := range ciRollup.Contexts.Nodes {
+			if isFailedCheck(ctx) && !isAuthGate(ctx) {
+				if name := checkName(ctx); name != "" {
+					item.FailedChecks = append(item.FailedChecks, name)
+				}
+			}
+		}
+	}
 
 	for _, r := range pr.Reviews.Nodes {
-		if r.State == "APPROVED" {
+		switch r.State {
+		case "APPROVED":
 			item.Approvals++
+		case "CHANGES_REQUESTED":
+			item.ChangesRequestedBy = append(item.ChangesRequestedBy, r.Author.Login)
 		}
 	}
 
@@ -93,7 +105,9 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 		for _, rr := range pr.ReviewRequests.Nodes {
 			if rr.RequestedReviewer.Login == user {
 				directlyRequested = true
-				break
+			}
+			if rr.RequestedReviewer.Login != "" {
+				item.RequestedBy = append(item.RequestedBy, rr.RequestedReviewer.Login)
 			}
 		}
 
@@ -343,6 +357,13 @@ func hasActionableCIFailure(rollup *fetch.CheckRollup) bool {
 		}
 	}
 	return false
+}
+
+func checkName(ctx fetch.CheckContext) string {
+	if ctx.Name != "" {
+		return ctx.Name
+	}
+	return ctx.Context
 }
 
 func isFailedCheck(ctx fetch.CheckContext) bool {
