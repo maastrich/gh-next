@@ -18,9 +18,11 @@ type RawData struct {
 
 type CheckContext struct {
 	// CheckRun fields
+	Name       string `json:"name"`
 	Conclusion string `json:"conclusion"`
 	DetailsUrl string `json:"detailsUrl"`
 	// StatusContext fields
+	Context     string `json:"context"`
 	State       string `json:"state"`
 	TargetUrl   string `json:"targetUrl"`
 	Description string `json:"description"`
@@ -120,8 +122,8 @@ const prFragment = `
   repository { nameWithOwner }
   commits(last: 1) {
     nodes { commit { committedDate statusCheckRollup { state contexts(last: 20) { nodes {
-      ... on CheckRun { conclusion detailsUrl }
-      ... on StatusContext { state targetUrl description }
+      ... on CheckRun { name conclusion detailsUrl }
+      ... on StatusContext { context state targetUrl description }
     } } } } }
   }
   reviews(last: 30) {

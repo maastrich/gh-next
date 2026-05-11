@@ -28,17 +28,20 @@ func LogPath() string     { return filepath.Join(Dir(), LogFile) }
 func IndexPath() string   { return filepath.Join(Dir(), IndexFile) }
 
 type Item struct {
-	Number    int    `json:"number"`
-	Title     string `json:"title"`
-	URL       string `json:"url"`
-	Repo      string `json:"repo"`
-	Kind      string `json:"kind"` // pr | issue | discussion
-	Status    string `json:"status"`
-	Icon      string `json:"icon"`
-	Group     string `json:"group"` // your_turn | their_turn | parked
-	UpdatedAt string `json:"updatedAt"`
-	CIState   string `json:"ciState,omitempty"`   // SUCCESS | FAILURE | ERROR | PENDING | IN_PROGRESS
-	Approvals int    `json:"approvals,omitempty"` // count of APPROVED reviews
+	Number             int      `json:"number"`
+	Title              string   `json:"title"`
+	URL                string   `json:"url"`
+	Repo               string   `json:"repo"`
+	Kind               string   `json:"kind"` // pr | issue | discussion
+	Status             string   `json:"status"`
+	Icon               string   `json:"icon"`
+	Group              string   `json:"group"` // your_turn | their_turn | parked
+	UpdatedAt          string   `json:"updatedAt"`
+	CIState            string   `json:"ciState,omitempty"`            // SUCCESS | FAILURE | ERROR | PENDING | IN_PROGRESS
+	Approvals          int      `json:"approvals,omitempty"`          // count of APPROVED reviews
+	FailedChecks       []string `json:"failedChecks,omitempty"`       // names of actionable failed checks
+	ChangesRequestedBy []string `json:"changesRequestedBy,omitempty"` // logins who requested changes
+	RequestedBy        []string `json:"requestedBy,omitempty"`        // direct review requesters
 }
 
 type Summary struct {
