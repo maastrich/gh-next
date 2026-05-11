@@ -5,6 +5,13 @@
 ## Install
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/maastrich/gh-next/main/install.sh | bash
+```
+
+Checks prerequisites, installs the extension, sets up a recurring schedule (weekdays 8am–6pm, hourly), and runs the first fetch.
+
+**Manual install:**
+```sh
 gh extension install maastrich/gh-next
 ```
 
