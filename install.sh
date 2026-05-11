@@ -19,6 +19,9 @@ ok "gh authenticated as $(gh api user --jq '.login')"
 command -v jq &>/dev/null || { warn "jq not found — installing via brew..."; brew install jq; }
 ok "jq $(jq --version)"
 
+command -v terminal-notifier &>/dev/null || { warn "terminal-notifier not found — installing via brew..."; brew install terminal-notifier; }
+ok "terminal-notifier $(terminal-notifier -version 2>/dev/null | head -1)"
+
 # Install / upgrade extension
 echo
 if gh extension list | grep -q "maastrich/gh-next"; then

@@ -78,4 +78,10 @@ gh next explore ~/contributions
 
 ## Prerequisites
 
-- [`gh`](https://cli.github.com/) — authenticated (`gh auth login`)
+| Tool | Required | Install |
+|------|----------|---------|
+| [`gh`](https://cli.github.com/) | ✅ | `brew install gh` + `gh auth login` |
+| [`jq`](https://jqlang.github.io/jq/) | ✅ | `brew install jq` |
+| [`terminal-notifier`](https://github.com/julienXX/terminal-notifier) | ✅ | `brew install terminal-notifier` |
+
+The curl install script handles all of these automatically.
