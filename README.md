@@ -1,0 +1,58 @@
+# gh-next
+
+> What needs your attention on GitHub — PRs, issues, and discussions, sorted by whose turn it is.
+
+## Install
+
+```sh
+gh extension install maastrich/gh-next
+```
+
+## Commands
+
+```sh
+gh next                      # Show cached status
+gh next status               # Fetch fresh data and show status
+gh next explore <path>       # Index all git repos under <path>
+```
+
+### `gh next status`
+
+Fetches all open PRs (authored + review-requested), open issues, and open discussions via the GitHub GraphQL API, classifies them, and displays them grouped by who needs to act.
+
+```sh
+gh next status
+gh next status --stale-days 14
+```
+
+### `gh next explore <path>`
+
+Walks the directory tree, finds every git repository with a GitHub remote, and writes `~/.gh-next/gh-index.json` mapping GitHub URLs to local filesystem paths. Handles multiple clones of the same repo.
+
+```sh
+gh next explore ~/code
+gh next explore ~/contributions
+```
+
+## Status categories
+
+| Group | Status | Meaning |
+|-------|--------|---------|
+| 🟢 Your turn | ⚔️ merge_conflict | Needs rebase |
+| | ✅ ready_to_merge | Approved + CI green, you can merge |
+| | 🔧 changes_needed | Changes requested or CI failing |
+| | 💬 awaiting_answer | Reviewer commented since last push |
+| | 💬 needs_reply | Someone replied to your issue/discussion |
+| | 👀 review_requested | Someone's PR waiting for your review |
+| | 🔁 re_review_requested | You reviewed, they pushed new commits |
+| 🟡 Their turn | ⏳ awaiting_merge | Approved, waiting on maintainer |
+| | ⚙️ ci_running | Tests in progress |
+| | 🔍 awaiting_review | No review yet |
+| | 🔍 awaiting_response | Waiting for reply on issue/discussion |
+| ⚪ Parked | 📝 draft | Draft PR |
+| | ✅ answered | Discussion marked answered |
+| | 🕸️ stale | No activity in 7+ days |
+
+## Prerequisites
+
+- [`gh`](https://cli.github.com/) — authenticated (`gh auth login`)
