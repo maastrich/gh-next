@@ -11,9 +11,13 @@ gh extension install maastrich/gh-next
 ## Commands
 
 ```sh
-gh next                      # Show cached status
-gh next status               # Fetch fresh data and show status
-gh next explore <path>       # Index all git repos under <path>
+gh next                              # Show cached status
+gh next status                       # Fetch fresh data and show status
+gh next explore <path>               # Index all git repos under <path>
+gh next program                      # Schedule hourly runs (weekdays 8am–6pm)
+gh next program "<cron>"             # Custom cron expression
+gh next program --show               # Show current schedule
+gh next program --remove             # Remove the cron job
 ```
 
 ### `gh next status`
@@ -23,6 +27,18 @@ Fetches all open PRs (authored + review-requested), open issues, and open discus
 ```sh
 gh next status
 gh next status --stale-days 14
+```
+
+### `gh next program [cron-expression]`
+
+Installs a cron job that runs `gh next status` on a schedule. Default: every hour from 8am to 6pm, Monday–Friday (`0 8-18 * * 1-5`), in your system timezone.
+
+```sh
+gh next program                     # default weekday schedule
+gh next program "0 * * * *"         # every hour, all day
+gh next program "0 9-17 * * 1-5"    # 9am–5pm weekdays
+gh next program --show              # show active schedule
+gh next program --remove            # remove the job
 ```
 
 ### `gh next explore <path>`

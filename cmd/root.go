@@ -30,4 +30,5 @@ var Root = &cobra.Command{
 func init() {
 	Root.AddCommand(statusCmd)
 	Root.AddCommand(exploreCmd)
+	Root.AddCommand(programCmd)
 }
