@@ -147,7 +147,7 @@ const discussionFragment = `
   }
 }`
 
-func Fetch(user string) (*RawData, error) {
+func Fetch(user string, includeArchived bool) (*RawData, error) {
 	client, err := api.DefaultGraphQLClient()
 	if err != nil {
 		return nil, fmt.Errorf("graphql client: %w", err)
@@ -158,25 +158,30 @@ func Fetch(user string) (*RawData, error) {
 		err   error
 	}
 
+	archivedFilter := " archived:false"
+	if includeArchived {
+		archivedFilter = ""
+	}
+
 	authored := make(chan result[PR], 1)
 	reviews := make(chan result[PR], 1)
 	issues := make(chan result[Issue], 1)
 	discussions := make(chan result[Discussion], 1)
 
 	go func() {
-		items, err := searchPRs(client, fmt.Sprintf("is:open is:pr author:%s", user))
+		items, err := searchPRs(client, fmt.Sprintf("is:open is:pr author:%s%s", user, archivedFilter))
 		authored <- result[PR]{items, err}
 	}()
 	go func() {
-		items, err := searchPRs(client, fmt.Sprintf("is:open is:pr review-requested:%s", user))
+		items, err := searchPRs(client, fmt.Sprintf("is:open is:pr review-requested:%s%s", user, archivedFilter))
 		reviews <- result[PR]{items, err}
 	}()
 	go func() {
-		items, err := searchIssues(client, fmt.Sprintf("is:open is:issue author:%s", user))
+		items, err := searchIssues(client, fmt.Sprintf("is:open is:issue author:%s%s", user, archivedFilter))
 		issues <- result[Issue]{items, err}
 	}()
 	go func() {
-		items, err := searchDiscussions(client, fmt.Sprintf("is:open author:%s", user))
+		items, err := searchDiscussions(client, fmt.Sprintf("is:open author:%s%s", user, archivedFilter))
 		discussions <- result[Discussion]{items, err}
 	}()
 

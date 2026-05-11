@@ -31,9 +31,12 @@ gh next program --remove             # Remove the cron job
 
 Fetches all open PRs (authored + review-requested), open issues, and open discussions via the GitHub GraphQL API, classifies them, and displays them grouped by who needs to act.
 
+By default, items from archived repositories are excluded. Use `--include-archived` to include them.
+
 ```sh
 gh next status
 gh next status --stale-days 14
+gh next status --include-archived
 ```
 
 ### `gh next program [cron-expression]`

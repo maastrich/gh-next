@@ -13,7 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var staleDays int
+var (
+	staleDays       int
+	includeArchived bool
+)
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
@@ -32,7 +35,7 @@ var statusCmd = &cobra.Command{
 		user := userResp.Login
 
 		fmt.Fprintf(os.Stderr, "Fetching as %s...\n", user)
-		data, err := fetch.Fetch(user)
+		data, err := fetch.Fetch(user, includeArchived)
 		if err != nil {
 			return fmt.Errorf("fetch: %w", err)
 		}
@@ -63,4 +66,5 @@ var statusCmd = &cobra.Command{
 
 func init() {
 	statusCmd.Flags().IntVar(&staleDays, "stale-days", 7, "Days without activity before an item is considered stale")
+	statusCmd.Flags().BoolVar(&includeArchived, "include-archived", false, "Include items from archived repositories (excluded by default)")
 }
