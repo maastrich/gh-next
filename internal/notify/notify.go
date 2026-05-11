@@ -9,21 +9,28 @@ import (
 	"github.com/maastrich/gh-next/internal/state"
 )
 
-func Send(title, message, url string) {
-	// For click target: prefer raw filesystem path over file:// URL
-	// `open /path/file.html` reliably opens in default browser on macOS
+// launcherPath is a small shell script written alongside the HTML report.
+// terminal-notifier -execute calls /bin/bash with this script — the only
+// reliable way to open a file from the notification's sandboxed context.
+func launcherPath() string {
+	return state.Dir() + "/open-report.sh"
+}
+
+func writeLauncher() {
 	htmlPath := state.HTMLPath()
-	openTarget := url
-	if openTarget == "" {
-		openTarget = htmlPath
-	} else {
-		// Strip file:// prefix if present — open works better with raw paths
-		openTarget = strings.TrimPrefix(openTarget, "file://")
-	}
+	content := "#!/bin/bash\n/usr/bin/open " + htmlPath + "\n"
+	_ = os.WriteFile(launcherPath(), []byte(content), 0755)
+}
+
+func Send(title, message, url string) {
+	writeLauncher()
 
 	if path, err := exec.LookPath("terminal-notifier"); err == nil {
-		// Use osascript via full path — -execute has no PATH in sandboxed context
-		executeCmd := fmt.Sprintf(`/usr/bin/osascript -e 'do shell script "/usr/bin/open %s"'`, openTarget)
+		executeCmd := "/bin/bash " + launcherPath()
+		if url != "" {
+			// For PR-specific notifications open the PR URL in the browser
+			executeCmd = fmt.Sprintf("/usr/bin/open %q", url)
+		}
 		args := []string{
 			"-title", title,
 			"-message", message,
