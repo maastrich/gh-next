@@ -80,6 +80,14 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 	}
 
 	if role == "review" {
+		directlyRequested := false
+		for _, rr := range pr.ReviewRequests.Nodes {
+			if rr.RequestedReviewer.Login == user {
+				directlyRequested = true
+				break
+			}
+		}
+
 		var myLastReview time.Time
 		for _, r := range pr.Reviews.Nodes {
 			if r.Author.Login == user {
@@ -90,7 +98,11 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 			}
 		}
 		lastCommit := parseTime(lastCommitDate)
-		if myLastReview.IsZero() {
+		if myLastReview.IsZero() && !directlyRequested {
+			item.Status = "team_review_requested"
+			item.Icon = "👥"
+			item.Group = "their_turn"
+		} else if myLastReview.IsZero() {
 			item.Status = "review_requested"
 			item.Icon = "👀"
 			item.Group = "your_turn"
@@ -102,6 +114,11 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 			item.Status = "awaiting_action"
 			item.Icon = "⏳"
 			item.Group = "their_turn"
+		}
+		if item.Group != "your_turn" && isStale(pr.UpdatedAt, staleThreshold) {
+			item.Status = "stale"
+			item.Icon = "🕸️"
+			item.Group = "parked"
 		}
 		return item
 	}

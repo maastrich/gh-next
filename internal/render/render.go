@@ -142,6 +142,7 @@ a.repo:hover { color: #8b949e; text-decoration: underline; }
 			{"awaiting_review", "🔍 Awaiting review"},
 			{"awaiting_response", "🔍 Awaiting response"},
 			{"awaiting_action", "⏳ Awaiting action"},
+			{"team_review_requested", "👥 Team review requested"},
 		},
 		"parked": {
 			{"draft", "📝 Draft"},

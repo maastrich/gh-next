@@ -256,6 +256,19 @@ func TestClassifyPR_authored(t *testing.T) {
 	}
 }
 
+func withDirectRequest(pr fetch.PR, login string) fetch.PR {
+	pr.ReviewRequests.Nodes = append(pr.ReviewRequests.Nodes, struct {
+		RequestedReviewer struct {
+			Login string `json:"login"`
+			Slug  string `json:"slug"`
+		} `json:"requestedReviewer"`
+	}{RequestedReviewer: struct {
+		Login string `json:"login"`
+		Slug  string `json:"slug"`
+	}{Login: login}})
+	return pr
+}
+
 func TestClassifyPR_review(t *testing.T) {
 	threshold := 7 * 24 * time.Hour
 
@@ -266,15 +279,34 @@ func TestClassifyPR_review(t *testing.T) {
 		wantGroup  string
 	}{
 		{
-			name:       "no review yet",
-			pr:         withCommit(basePR(1), ago(2*time.Hour), ""),
+			name: "directly requested, no review yet",
+			pr: func() fetch.PR {
+				p := withCommit(basePR(1), ago(2*time.Hour), "")
+				return withDirectRequest(p, user)
+			}(),
 			wantStatus: "review_requested",
 			wantGroup:  "your_turn",
 		},
 		{
+			name:       "team-only request, no review yet → their_turn",
+			pr:         withCommit(basePR(2), ago(2*time.Hour), ""),
+			wantStatus: "team_review_requested",
+			wantGroup:  "their_turn",
+		},
+		{
+			name: "team-only request, stale → parked",
+			pr: func() fetch.PR {
+				p := withCommit(basePR(3), ago(2*time.Hour), "")
+				p.UpdatedAt = staleUpdatedAt()
+				return p
+			}(),
+			wantStatus: "stale",
+			wantGroup:  "parked",
+		},
+		{
 			name: "reviewed, no new commits",
 			pr: func() fetch.PR {
-				p := withCommit(basePR(2), ago(2*time.Hour), "")
+				p := withCommit(basePR(4), ago(2*time.Hour), "")
 				p = withReview(p, user, ago(1*time.Hour), "APPROVED")
 				return p
 			}(),
@@ -284,7 +316,7 @@ func TestClassifyPR_review(t *testing.T) {
 		{
 			name: "new commit after my review",
 			pr: func() fetch.PR {
-				p := withCommit(basePR(3), ago(30*time.Minute), "")
+				p := withCommit(basePR(5), ago(30*time.Minute), "")
 				p = withReview(p, user, ago(2*time.Hour), "APPROVED")
 				return p
 			}(),
