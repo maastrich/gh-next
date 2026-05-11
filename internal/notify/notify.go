@@ -22,11 +22,13 @@ func Send(title, message, url string) {
 	}
 
 	if path, err := exec.LookPath("terminal-notifier"); err == nil {
+		// Use osascript via full path — -execute has no PATH in sandboxed context
+		executeCmd := fmt.Sprintf(`/usr/bin/osascript -e 'do shell script "/usr/bin/open %s"'`, openTarget)
 		args := []string{
 			"-title", title,
 			"-message", message,
 			"-group", "gh-next",
-			"-execute", "open " + openTarget,
+			"-execute", executeCmd,
 		}
 		cmd := exec.Command(path, args...)
 		cmd.Stdout = os.Stderr
