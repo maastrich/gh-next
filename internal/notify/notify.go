@@ -16,14 +16,14 @@ func launcherPath() string {
 	return state.Dir() + "/open-report.sh"
 }
 
-func writeLauncher() {
+func WriteLauncher() {
 	htmlPath := state.HTMLPath()
 	content := "#!/bin/bash\n/usr/bin/open " + htmlPath + "\n"
 	_ = os.WriteFile(launcherPath(), []byte(content), 0755)
 }
 
 func Send(title, message, url string) {
-	writeLauncher()
+	WriteLauncher()
 
 	if path, err := exec.LookPath("terminal-notifier"); err == nil {
 		executeCmd := "/bin/bash " + launcherPath()

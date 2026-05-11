@@ -126,15 +126,12 @@ func removeCron() error {
 }
 
 func showCron() error {
-	current := readCrontab()
-	lines := strings.Split(current, "\n")
-	for i, line := range lines {
-		if line == cronMarker && i+1 < len(lines) {
-			fmt.Println(lines[i+1])
-			return nil
-		}
+	entry := getCronEntry()
+	if entry == "" {
+		fmt.Println("No schedule configured. Run: gh next program")
+		return nil
 	}
-	fmt.Println("No schedule configured. Run: gh next program")
+	fmt.Println(entry)
 	return nil
 }
 
