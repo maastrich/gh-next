@@ -8,6 +8,14 @@ import (
 	"github.com/maastrich/gh-next/internal/state"
 )
 
+func isBot(typename, login string) bool {
+	if typename == "Bot" {
+		return true
+	}
+	l := strings.ToLower(login)
+	return strings.HasSuffix(l, "[bot]") || strings.Contains(l, "copilot")
+}
+
 const defaultStaleDays = 7
 
 func Run(data *fetch.RawData, staleDays int) []state.Item {
@@ -173,12 +181,19 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 		lastCommit := parseTime(lastCommitDate)
 		hasNewComments := false
 		for _, r := range pr.Reviews.Nodes {
-			if r.Author.Login != user {
-				t := parseTime(r.SubmittedAt)
-				if t.After(lastCommit) {
-					hasNewComments = true
-					break
-				}
+			if r.Author.Login == "" || r.Author.Login == user {
+				continue
+			}
+			if r.State != "COMMENTED" {
+				continue
+			}
+			if isBot(r.Author.Typename, r.Author.Login) && r.Comments.TotalCount == 0 {
+				continue
+			}
+			t := parseTime(r.SubmittedAt)
+			if t.After(lastCommit) {
+				hasNewComments = true
+				break
 			}
 		}
 		if hasNewComments {

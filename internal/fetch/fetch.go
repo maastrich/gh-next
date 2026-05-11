@@ -57,10 +57,14 @@ type PR struct {
 	Reviews struct {
 		Nodes []struct {
 			Author struct {
-				Login string `json:"login"`
+				Login    string `json:"login"`
+				Typename string `json:"__typename"`
 			} `json:"author"`
 			State       string `json:"state"`
 			SubmittedAt string `json:"submittedAt"`
+			Comments    struct {
+				TotalCount int `json:"totalCount"`
+			} `json:"comments"`
 		} `json:"nodes"`
 	} `json:"reviews"`
 	ReviewRequests struct {
@@ -122,7 +126,11 @@ const prFragment = `
     } } } } }
   }
   reviews(last: 30) {
-    nodes { author { login } state submittedAt }
+    nodes {
+      author { login __typename }
+      state submittedAt
+      comments { totalCount }
+    }
   }
   reviewRequests(first: 10) {
     nodes { requestedReviewer { ... on User { login } ... on Team { slug } } }

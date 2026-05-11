@@ -56,19 +56,28 @@ func withRollup(pr fetch.PR, committedAt string, rollup *fetch.CheckRollup) fetc
 }
 
 func withReview(pr fetch.PR, login, submittedAt, reviewState string) fetch.PR {
-	pr.Reviews.Nodes = append(pr.Reviews.Nodes, struct {
+	return withReviewFull(pr, login, submittedAt, reviewState, "", 0)
+}
+
+func withReviewFull(pr fetch.PR, login, submittedAt, reviewState, typename string, inlineComments int) fetch.PR {
+	node := struct {
 		Author struct {
-			Login string "json:\"login\""
+			Login    string "json:\"login\""
+			Typename string "json:\"__typename\""
 		} "json:\"author\""
 		State       string "json:\"state\""
 		SubmittedAt string "json:\"submittedAt\""
+		Comments    struct {
+			TotalCount int "json:\"totalCount\""
+		} "json:\"comments\""
 	}{
-		Author: struct {
-			Login string "json:\"login\""
-		}{Login: login},
 		State:       reviewState,
 		SubmittedAt: submittedAt,
-	})
+	}
+	node.Author.Login = login
+	node.Author.Typename = typename
+	node.Comments.TotalCount = inlineComments
+	pr.Reviews.Nodes = append(pr.Reviews.Nodes, node)
 	return pr
 }
 
@@ -165,6 +174,50 @@ func TestClassifyPR_authored(t *testing.T) {
 			}(),
 			wantStatus: "awaiting_answer",
 			wantGroup:  "your_turn",
+		},
+		{
+			name: "bot summary review with no inline comments is ignored",
+			pr: func() fetch.PR {
+				commitTime := ago(2 * time.Hour)
+				p := withCommit(basePR(14), commitTime, "SUCCESS")
+				p = withReviewFull(p, "copilot-pull-request-reviewer", ago(1*time.Hour), "COMMENTED", "User", 0)
+				return p
+			}(),
+			wantStatus: "awaiting_review",
+			wantGroup:  "their_turn",
+		},
+		{
+			name: "bot review with inline comments still triggers awaiting_answer",
+			pr: func() fetch.PR {
+				commitTime := ago(2 * time.Hour)
+				p := withCommit(basePR(15), commitTime, "SUCCESS")
+				p = withReviewFull(p, "copilot-pull-request-reviewer", ago(1*time.Hour), "COMMENTED", "User", 3)
+				return p
+			}(),
+			wantStatus: "awaiting_answer",
+			wantGroup:  "your_turn",
+		},
+		{
+			name: "Bot typename with no inline comments is ignored",
+			pr: func() fetch.PR {
+				commitTime := ago(2 * time.Hour)
+				p := withCommit(basePR(16), commitTime, "SUCCESS")
+				p = withReviewFull(p, "dependabot", ago(1*time.Hour), "COMMENTED", "Bot", 0)
+				return p
+			}(),
+			wantStatus: "awaiting_review",
+			wantGroup:  "their_turn",
+		},
+		{
+			name: "APPROVED-only review does not trigger awaiting_answer",
+			pr: func() fetch.PR {
+				commitTime := ago(2 * time.Hour)
+				p := withCommit(basePR(17), commitTime, "SUCCESS")
+				p = withReview(p, "bob", ago(1*time.Hour), "APPROVED")
+				return p
+			}(),
+			wantStatus: "awaiting_review",
+			wantGroup:  "their_turn",
 		},
 		{
 			name: "changes_needed CI failure no approval",
