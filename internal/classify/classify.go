@@ -184,9 +184,12 @@ func classifyPR(pr fetch.PR, role, user string, staleThreshold time.Duration) st
 			if r.Author.Login == "" || r.Author.Login == user {
 				continue
 			}
-			if r.State != "COMMENTED" {
+			// Approvals/dismissals without inline comments aren't questions to answer.
+			// COMMENTED with no inline still counts: the review body is the feedback.
+			if r.State != "COMMENTED" && r.Comments.TotalCount == 0 {
 				continue
 			}
+			// Bot summaries without inline comments are auto-generated noise.
 			if isBot(r.Author.Typename, r.Author.Login) && r.Comments.TotalCount == 0 {
 				continue
 			}

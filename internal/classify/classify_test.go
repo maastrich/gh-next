@@ -209,7 +209,7 @@ func TestClassifyPR_authored(t *testing.T) {
 			wantGroup:  "their_turn",
 		},
 		{
-			name: "APPROVED-only review does not trigger awaiting_answer",
+			name: "APPROVED with no inline comments does not trigger awaiting_answer",
 			pr: func() fetch.PR {
 				commitTime := ago(2 * time.Hour)
 				p := withCommit(basePR(17), commitTime, "SUCCESS")
@@ -218,6 +218,17 @@ func TestClassifyPR_authored(t *testing.T) {
 			}(),
 			wantStatus: "awaiting_review",
 			wantGroup:  "their_turn",
+		},
+		{
+			name: "APPROVED with inline comments triggers awaiting_answer",
+			pr: func() fetch.PR {
+				commitTime := ago(2 * time.Hour)
+				p := withCommit(basePR(18), commitTime, "SUCCESS")
+				p = withReviewFull(p, "bob", ago(1*time.Hour), "APPROVED", "User", 2)
+				return p
+			}(),
+			wantStatus: "awaiting_answer",
+			wantGroup:  "your_turn",
 		},
 		{
 			name: "changes_needed CI failure no approval",
