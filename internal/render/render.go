@@ -362,7 +362,7 @@ func itemDetail(item state.Item) string {
 	}
 	var parts []string
 
-	// CI state
+	// CI failure — blocking
 	switch {
 	case len(item.FailedChecks) > 0:
 		names := item.FailedChecks
@@ -384,11 +384,9 @@ func itemDetail(item state.Item) string {
 		parts = append(parts, `<span class="d-ci-fail">CI ✗</span>`)
 	case item.CIState == "PENDING" || item.CIState == "IN_PROGRESS" || item.CIState == "EXPECTED":
 		parts = append(parts, `<span class="d-ci-pend">CI ⋯</span>`)
-	case item.CIState == "SUCCESS":
-		parts = append(parts, `<span class="d-ci-ok">CI ✓</span>`)
 	}
 
-	// Review context
+	// Changes requested — blocking
 	if len(item.ChangesRequestedBy) > 0 {
 		reviewers := item.ChangesRequestedBy
 		if len(reviewers) > 2 {
@@ -403,28 +401,6 @@ func itemDetail(item state.Item) string {
 			suffix = fmt.Sprintf(" +%d requested changes", len(item.ChangesRequestedBy)-2)
 		}
 		parts = append(parts, fmt.Sprintf(`<span class="d-rev-rej">%s%s</span>`, strings.Join(names, ", "), suffix))
-	} else if item.Approvals > 0 {
-		parts = append(parts, fmt.Sprintf(`<span class="d-rev-ok">%d ✓</span>`, item.Approvals))
-	}
-
-	// Who requested review (for review_requested / team_review_requested)
-	if (item.Status == "review_requested" || item.Status == "re_review_requested" ||
-		item.Status == "team_review_requested") && len(item.RequestedBy) > 0 {
-		reviewers := item.RequestedBy
-		extra := 0
-		if len(reviewers) > 3 {
-			extra = len(reviewers) - 3
-			reviewers = reviewers[:3]
-		}
-		names := make([]string, len(reviewers))
-		for i, r := range reviewers {
-			names[i] = html.EscapeString(r)
-		}
-		label := strings.Join(names, ", ")
-		if extra > 0 {
-			label += fmt.Sprintf(" +%d", extra)
-		}
-		parts = append(parts, fmt.Sprintf(`<span class="d-meta">→ %s</span>`, label))
 	}
 
 	if len(parts) == 0 {
